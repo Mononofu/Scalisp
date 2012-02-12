@@ -2,62 +2,122 @@ package Scalisp
 
 import scala.util.parsing.combinator._
 
-class Env(m: collection.mutable.Map[String, (Any*) => Any]) {
-	def update(k: String, v: Any) = m(k) = ( (args: Any) => v)
-	def apply(k: String) = m(k)
+class Env(parent: Env) {
+	val map = collection.mutable.Map[String, (Seq[Any]) => Any]()
+
+	def update(k: String, v: (Seq[Any]) => Any) { map.get(k) match {
+		case Some(v) => map(k) = v
+		case None => parent(k) = v
+	} }
+	def define(k: String, v: (Seq[Any]) => Any) { map(k) = v }
+	def apply(k: String): (Seq[Any]) => Any = map.get(k) match {
+		case Some(v) => v
+		case None => parent match {
+			case null => (_) => k + " not found"
+			case _ => parent(k)
+		}
+	}
 }
 
-abstract class Expression { def eval(env: Env): Any }
+abstract class Expression { def eval(env: Env): (Seq[Any]) => Any }
 case class If(cond: Expression, thn: Expression, els: Expression) extends Expression {
-	override def eval(env: Env) = cond.eval(env) match {
+	override def eval(env: Env) = cond.eval(env)(List()) match {
 		case r: Boolean => if(r) thn.eval(env) else els.eval(env)
 		case _ => els.eval(env)
 	}
 }
 case class Set(v: String, exp: Expression) extends Expression {
-	override def eval(env: Env) { env(v) = exp.eval(env) }
+	override def eval(env: Env) = (_) => { env(v) = exp.eval(env) }
 }
 case class Define(v: String, exp: Expression) extends Expression {
-	override def eval(env: Env) { env(v) = exp.eval(env) }
+	override def eval(env: Env) = (_) => { env.define(v, exp.eval(env)) }
 }
 
-
-case class Number(num: Int) extends Expression {
-	override def eval(env: Env): Int = num
+case class Number(num: Double) extends Expression {
+	override def eval(env: Env) = (_) => num
+}
+case class Text(s: String) extends Expression {
+	override def eval(env: Env) = (_) => s
 }
 case class Variable(name: String) extends Expression {
-	override def eval(env: Env): (Any*) => Any = env(name)
+	override def eval(env: Env) = (_) => env(name)(List())
 }
 
-case class Lambda(params: List[Variable], body: Expression) extends Expression {
-	override def eval(env: Env) {
-	}
+case class Lambda(params: Seq[Variable], body: Expression) extends Expression {
+	override def eval(env: Env) = (paramValues: Seq[Any]) => {
+			val context = new Env(env)
+			params.zip(paramValues).foreach {
+				case (param, value) => context.define(param.name, (_) => value)
+			}
+			body.eval(context)(List())
+		} 
 }
-case class Procedure(name: Variable, params: List[Expression]) extends Expression {
+
+case class Procedure(name: Variable, params: Seq[Expression]) extends Expression {
 	override def eval(env: Env) = {
-		val f = name.eval(env) 
-		val p = params.map(_.eval(env))
-		f(p: _*)
+		val f = env(name.name) 
+		val p = params.map(_.eval(env)(List()))
+		(_) => f(p)
 	}
 }
 
-case class ExpressionList(exps: List[Expression]) extends Expression {
+case class ExpressionList(exps: Seq[Expression]) extends Expression {
 	override def eval(env: Env) = exps map { _.eval(env) } last
 }
 
 object Functions {
-	def add(nums: Any*) = nums match {
-		case n: Seq[Int] => n.reduce(_ + _)
-		case s: Seq[String] => s.mkString
+	def add(nums: Seq[Any]) = nums match {
+		case n: Seq[Double] => n.reduce(_ + _)
 	}
+	def sub(nums: Seq[Any]) = nums match {
+		case n: Seq[Double] => n.reduce(_ - _)
+	}
+	def mul(nums: Seq[Any]) = nums match {
+		case n: Seq[Double] => n.reduce(_ * _) 
+	}
+	
+	def compare(
+		op: (Double, Double) => Boolean, 
+		init: Double, 
+		n: Seq[Double]
+		): Boolean = n.fold( (init, true) ) { 
+			case ( (prev: Double, valid: Boolean), cur: Double) => 
+				if(valid && op(prev, cur)) (cur, true) else (cur, false) 
+			} match {
+				case (_, flag: Boolean) => flag
+			}
+
+	def greater(nums: Seq[Any]) = nums match {
+		case n: Seq[Double] => compare(_ > _, n.head + 1, n)
+	}
+
+	def less(nums: Seq[Any]): Boolean = nums match {
+		case n: Seq[Double] => compare(_ < _, n.head - 1, n)
+	}
+
+	def eq(nums: Seq[Any]): Boolean = nums match {
+		case n: Seq[Double] => compare(_ == _, n.head, n)
+	}
+	
 }
 
 class LispParser extends JavaTokenParsers {
-	val defaultEnv = new Env(collection.mutable.Map[String, (Any*) => Any]( ("add", Functions.add )))
+	val defaultEnv = new Env(null) { override val map = collection.mutable.Map[String, (Seq[Any]) => Any]( 
+		"+" -> Functions.add, 
+		"-" -> Functions.sub,
+		"*" -> Functions.mul,
+		"true" -> ((_) => true),
+		"false" -> ((_) => false),
+		"<" -> Functions.less,
+		">" -> Functions.greater,
+		"=" -> Functions.eq
+		) 
+	}
 
 	def expression: Parser[Expression] = ( 
 		"("~>expressionBody<~")" |
 		number |
+		string |
 		variable )
 	def expressionBody: Parser[Expression] = (
 		"quote"~>expression
@@ -70,19 +130,20 @@ class LispParser extends JavaTokenParsers {
 		| "define"~variable~expression ^^ {
 			case "define"~v~e => Define(v.name, e)
 		}
-		| "lambda"~"("~repsep(variable, " ")~")"~expression ^^ {
+		| "lambda"~"("~rep(variable)~")"~expression ^^ {
 			case "lambda"~"("~args~")"~exp => Lambda(args, exp)
 		}
-		| "begin"~repsep(expression, " ") ^^ {
+		| "begin"~rep(expression) ^^ {
 			case "begin"~exps => ExpressionList(exps)			
 		}
 		| variable~rep(expression) ^^ {
 			case name~params => Procedure(name, params)
 		} )
-	def number: Parser[Number] = """\d+""".r ^^ (n => Number(n.toInt)) 
-	def variable: Parser[Variable] = "[A-Za-z][A-Za-z0-9_]*".r ^^ (n => Variable(n))
+	def number: Parser[Number] = floatingPointNumber ^^ (n => Number(n.toDouble))
+	def string: Parser[Text] = "\""~>"[^\"]*".r<~"\"" ^^ (s => Text(s))
+	def variable: Parser[Variable] = """[A-Za-z\+\-\<\>\=\*][A-Za-z0-9_]*""".r ^^ (n => Variable(n))
 
-	def executeLine(line: String) = parseAll(expression, line).get.eval(defaultEnv)
+	def executeLine(line: String) = parseAll(expression, line).get.eval(defaultEnv)(List())
 
 	override def skipWhitespace = true
 }
