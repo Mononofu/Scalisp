@@ -62,7 +62,7 @@ case class Procedure(name: Variable, params: Seq[Expression]) extends Expression
 }
 
 case class ExpressionList(exps: Seq[Expression]) extends Expression {
-	override def eval(env: Env) = exps map { _.eval(env) } last
+	override def eval(env: Env) = (_) => exps map { _.eval(env)(List()) } last
 }
 
 object Functions {
