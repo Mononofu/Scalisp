@@ -66,16 +66,6 @@ case class ExpressionList(exps: Seq[Expression]) extends Expression {
 }
 
 object Functions {
-	def add(nums: Seq[Any]) = nums match {
-		case n: Seq[Double] => n.reduce(_ + _)
-	}
-	def sub(nums: Seq[Any]) = nums match {
-		case n: Seq[Double] => n.reduce(_ - _)
-	}
-	def mul(nums: Seq[Any]) = nums match {
-		case n: Seq[Double] => n.reduce(_ * _) 
-	}
-	
 	def compare(
 		op: (Double, Double) => Boolean, 
 		init: Double, 
@@ -87,70 +77,43 @@ object Functions {
 				case (_, flag: Boolean) => flag
 			}
 
-	def greater(nums: Seq[Any]) = nums match {
-		case n: Seq[Double] => compare(_ > _, n.head + 1, n)
+	def op(fun: Seq[Double] => Any) = (nums: Seq[Any]) => nums match {
+		case n: Seq[Double] => fun(n)
 	}
-
-	def less(nums: Seq[Any]): Boolean = nums match {
-		case n: Seq[Double] => compare(_ < _, n.head - 1, n)
-	}
-
-	def eq(nums: Seq[Any]): Boolean = nums match {
-		case n: Seq[Double] => compare(_ == _, n.head, n)
-	}
-	
 }
 
 class LispParser extends JavaTokenParsers {
 	val defaultEnv = new Env(null) { override val map = collection.mutable.Map[String, (Seq[Any]) => Any]( 
-		"+" -> Functions.add, 
-		"-" -> Functions.sub,
-		"*" -> Functions.mul,
+		"+" -> Functions.op(_.reduce(_ + _)), 
+		"-" -> Functions.op(_.reduce(_ - _)),
+		"*" -> Functions.op(_.reduce(_ * _)),
 		"true" -> ((_) => true),
 		"false" -> ((_) => false),
-		"<" -> Functions.less,
-		">" -> Functions.greater,
-		"=" -> Functions.eq
+		"<" -> Functions.op(n => Functions.compare(_ < _, n.head-1, n)),
+		">" -> Functions.op(n => Functions.compare(_ > _, n.head+1, n)),
+		"=" -> Functions.op(n => Functions.compare(_ == _, n.head, n))
 		) 
 	}
 
-	def expression: Parser[Expression] = ( 
-		"("~>expressionBody<~")" |
-		number |
-		string |
-		variable )
-	def expressionBody: Parser[Expression] = (
-		"quote"~>expression
-		| "if"~expression~expression~expression ^^ {
-			case "if"~cond~thn~els => If(cond, thn, els)
-		}
-		| "set!"~variable~expression ^^ {
-			case "set!"~v~e => Set(v.name, e)
-		}
-		| "define"~variable~expression ^^ {
-			case "define"~v~e => Define(v.name, e)
-		}
+	def expression: Parser[Expression] = (
+		"("~>expressionBody<~")" | number | string | variable )
+	def expressionBody: Parser[Expression] = ( "quote"~>expression
+		| "if"~expression~expression~expression ^^ { 
+			case "if"~cond~thn~els => If(cond, thn, els) }
+		| "set!"~variable~expression ^^ { case "set!"~v~e => Set(v.name, e) }
+		| "define"~variable~expression ^^ { case "define"~v~e => Define(v.name, e) }
 		| "lambda"~"("~rep(variable)~")"~expression ^^ {
-			case "lambda"~"("~args~")"~exp => Lambda(args, exp)
-		}
-		| "begin"~rep(expression) ^^ {
-			case "begin"~exps => ExpressionList(exps)			
-		}
-		| variable~rep(expression) ^^ {
-			case name~params => Procedure(name, params)
-		} )
+			case "lambda"~"("~args~")"~exp => Lambda(args, exp) }
+		| "begin"~rep(expression) ^^ { case "begin"~exps => ExpressionList(exps) }
+		| variable~rep(expression) ^^ { case name~params => Procedure(name, params)})
 	def number: Parser[Number] = floatingPointNumber ^^ (n => Number(n.toDouble))
 	def string: Parser[Text] = "\""~>"[^\"]*".r<~"\"" ^^ (s => Text(s))
 	def variable: Parser[Variable] = """[A-Za-z\+\-\<\>\=\*][A-Za-z0-9_]*""".r ^^ (n => Variable(n))
 
 	def executeLine(line: String) = parseAll(expression, line).get.eval(defaultEnv)(List())
-
-	override def skipWhitespace = true
 }
 
 object REPL extends App {
 	val parser = new LispParser()
-
 	Iterator.continually(Console.readLine).takeWhile(_ != "").foreach(line => println( parser.executeLine(line) ))
-
 }
