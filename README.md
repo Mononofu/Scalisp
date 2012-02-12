@@ -8,12 +8,12 @@
 			                                                      888       
 			                                                     o888o      
 
-A lisp interpreter in ~100 lines of Scala, inspired by (Peter Norvig)[http://norvig.com/lispy.html]
+A lisp interpreter in ~100 lines of Scala, inspired by [Peter Norvig](http://norvig.com/lispy.html)
 
 It's very incomplete and probably buggy, but it works good enough to calculate
 factorials and stuff: 
 
 	(define fact (lambda (n) (if (< n 2) 1 (* n (fact (- n 1))))))
-	(fact 10)") 
+	(fact 10) 
 
 produces 3628800
