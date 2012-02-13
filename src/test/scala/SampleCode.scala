@@ -16,5 +16,13 @@ class SampleCode extends FlatSpec with ShouldMatchers {
 		parser.executeLine("(fact 0)") should equal (1)
 	}
 
+  "Fibonacci numbers" should "also work" in {
+    parser.executeLine("(define fib (lambda (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))))")
+
+    parser.executeLine("(fib 1)") should equal (1)
+    parser.executeLine("(fib 2)") should equal (1)
+    parser.executeLine("(fib 10)") should equal (55)
+    parser.executeLine("(fib 15)") should equal (610)
+  }
 
 }
