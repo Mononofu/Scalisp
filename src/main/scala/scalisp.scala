@@ -115,5 +115,10 @@ class LispParser extends JavaTokenParsers {
 
 object REPL extends App {
 	val parser = new LispParser()
-	Iterator.continually(Console.readLine).takeWhile(_ != "").foreach(line => println( parser.executeLine(line) ))
+	Iterator.continually {
+			Console.print(">>> ")
+			Console.readLine()
+		} takeWhile(_ != "") foreach {
+			line => println( parser.executeLine(line) )
+		}
 }
