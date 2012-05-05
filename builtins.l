@@ -56,6 +56,10 @@
   )
 )
 
+(defun reduce (f seq)
+  (foldl f (car seq) (cdr seq))
+)
+
 (defun filter (f seq)
   (if (= '() seq)
     '()
