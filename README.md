@@ -13,10 +13,12 @@ A lisp interpreter written in Scala, inspired by [Peter Norvig](http://norvig.co
 It's very incomplete and probably buggy, but it works good enough to calculate
 factorials and stuff: 
 
-	(define fact (lambda (n) (if (< n 2) 1 (* n (fact (- n 1))))))
-	(fact 10) 
+```lisp
+(define fact (lambda (n) (if (< n 2) 1 (* n (fact (- n 1))))))
+(fact 10) 
+```
 
-produces 3628800
+produces `3628800`
 
 Also, Merge sort can be implemented without a problem:
 
@@ -57,7 +59,9 @@ Also, Merge sort can be implemented without a problem:
 
 Usage is just like you'd expect
 
-	(msort '(5 7 2 1 3 4 6))
+```lisp
+(msort '(5 7 2 1 3 4 6))
+```
 
 And results in `'(1 2 3 4 5 6 7)`
 
