@@ -51,8 +51,8 @@ object Builtins {
     case ">" => compare(_ > _, 1, l.tail, env)
     case ">=" => compare(_ >= _, 0, l.tail, env)
     case "<=" => compare(_ <= _, 0, l.tail, env)
-    case "=" => l.tail.distinct.length == 1
-    case "!=" => l.tail.distinct.length > 1
+    case "=" => l.tail.map(e => Interpreter.eval(e, env)).distinct.length == 1
+    case "!=" => l.tail.map(e => Interpreter.eval(e, env)).distinct.length > 1
 
     case "atom" => l(1) match {
       case l: List[Any] => false
@@ -87,25 +87,11 @@ object Builtins {
       case _ => throw new TypeError("can't append non-lists")
     }
 
-    case "length" => Interpreter.eval(l(1), env) match {
-      case l: List[Any] => l.length.toLong
-      case _ => throw new TypeError("can't take length of non-list")
-    }
+    case "list" => l.tail.map(e => Interpreter.eval(e, env))
 
-    case "subseq" => Interpreter.eval(l(1), env) match {
-      case list: List[Any] => 
-        val start = Interpreter.eval(l(2), env) match {
-          case n: Long => n
-          case d: Double => math.round(d)
-          case _ => throw new TypeError("subseq boundary has to be numeric")
-        }
-        val end = if(l.length == 3) list.length else Interpreter.eval(l(3), env) match {
-          case n: Long => n
-          case d: Double => math.round(d)
-          case _ => throw new TypeError("subseq boundary has to be numeric")
-        }
-        list.slice(start.toInt, end.toInt)
-      case _ => throw new TypeError("can only take subseq of list")
+    case "shuffle" => Interpreter.eval(l(1), env) match {
+      case list: List[Any] => util.Random.shuffle(list)
+      case _ => throw new TypeError("can't shuffle a non-list")
     }
 
     case "print" => println(l.tail.map(e => Interpreter.eval(e, env)).mkString)

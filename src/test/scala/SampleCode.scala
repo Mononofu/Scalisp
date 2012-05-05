@@ -1,5 +1,3 @@
-
-
 package Scalisp
 
 import org.scalatest.FlatSpec
@@ -43,7 +41,7 @@ class SampleCode extends FlatSpec with ShouldMatchers {
           ) 
         )
       )
-    
+
       (define merge
         (lambda (a b)
           (if (< (length a) 1)

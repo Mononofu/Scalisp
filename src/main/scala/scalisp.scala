@@ -14,13 +14,42 @@ class Env(parent: Env) {
       }
     } 
   }
-  def define(k: String, v: Any) { map(k) = v }
+  def define(k: String, v: Any) { 
+    v match {
+      case f: Function =>
+        map.get(k) match {
+          case Some(t: FunctionTable) => 
+            t.add(f)
+          case _ => 
+            val t = new FunctionTable()
+            t.add(f)
+            map(k) = t
+        }
+      case _ => map(k) = v 
+    }
+  }
   def apply(k: String): Option[Any] = map.get(k) match {
     case None => parent match {
       case null => None
       case _ => parent(k)
     }
     case v => v
+  }
+
+  def getFunction(k: String, arity: Int): Option[Function] = map.get(k) match {
+    case None => parent match {
+      case null => None
+      case _ => parent.getFunction(k, arity)
+    }
+    case Some(t: FunctionTable) => 
+      t(arity) match {
+      case None => parent match {
+        case null => None
+        case _ => parent.getFunction(k, arity)
+      }
+      case f => f
+    }
+    case v => throw new TypeError(k + " is not a function, " + v)
   }
 }
 
@@ -34,9 +63,11 @@ class REPL {
 
   val parser = new LispParser()
 
+  // load builtins defined in lisp
+  execute(io.Source.fromFile("builtins.l").mkString)
+
   def execute(l: String) = {
     val ast = parser.parse(l.replaceAll(";[^\n$]*", " ").replace("\n", " "))
-
     ast.map(e => Interpreter.eval(e, defaultEnv))
   }
 
@@ -52,7 +83,13 @@ object Scalisp {
   def main(args: Array[String]) {
     if(args.length > 0) {
       val input = io.Source.fromFile(args(0)).mkString
-      repl.execute(input)
+      try {
+        repl.execute(input)
+      }
+      catch {
+        case e: InterpreterException => println(e)
+        case e: MatchError => println(e)
+      }
     }
     else {
       val consoleReader = new jline.console.ConsoleReader()
