@@ -34,15 +34,12 @@ class REPL {
 
   val parser = new LispParser()
 
-  def execute(l: String) = l.split("\n").map(_.trim).filter(_.length > 0).map {
-    case line => executeLine(line)
+  def execute(l: String) = {
+    val ast = parser.parse(l.replace("\n", " "))
+    ast.map(e => Interpreter.eval(e, defaultEnv))
   }
 
-  def executeLine(l: String) = {
-    val ast = parser.parse(l)
-    val v = Interpreter.eval(ast, defaultEnv)
-    v
-  }
+  def executeLine(l: String) = execute(l).last
 }
 
 object Scalisp extends App {

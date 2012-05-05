@@ -62,6 +62,7 @@ object Builtins {
     case "to-string" => l(1).toString
 
 
+    // list functions
     case "car" => Interpreter.eval(l(1), env) match {
       case l: List[Any] => l.head
       case s: String => s.head
@@ -87,8 +88,24 @@ object Builtins {
     }
 
     case "length" => Interpreter.eval(l(1), env) match {
-      case l: List[Any] => l.length
+      case l: List[Any] => l.length.toLong
       case _ => throw new TypeError("can't take length of non-list")
+    }
+
+    case "subseq" => Interpreter.eval(l(1), env) match {
+      case list: List[Any] => 
+        val start = Interpreter.eval(l(2), env) match {
+          case n: Long => n
+          case d: Double => math.round(d)
+          case _ => throw new TypeError("subseq boundary has to be numeric")
+        }
+        val end = if(l.length == 3) list.length else Interpreter.eval(l(3), env) match {
+          case n: Long => n
+          case d: Double => math.round(d)
+          case _ => throw new TypeError("subseq boundary has to be numeric")
+        }
+        list.slice(start.toInt, end.toInt)
+      case _ => throw new TypeError("can only take subseq of list")
     }
 
     case "print" => println(l.tail.map(e => Interpreter.eval(e, env)).mkString)

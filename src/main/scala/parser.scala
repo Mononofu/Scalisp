@@ -5,11 +5,12 @@ import scala.util.parsing.combinator._
 case class Literal(l: String) { }
 
 class LispParser extends JavaTokenParsers {
-  def parse(line: String) = parseAll(exp, line) match {
+  def parse(line: String) = parseAll(program, line) match {
     case Success(r, _) => r
   }
 
   // grammar
+  def program: Parser[List[Any]] = rep(exp)
   def list: Parser[List[Any]] = "("~>rep(exp)<~")"
   def exp: Parser[Any] = ( 
       real

@@ -25,4 +25,45 @@ class SampleCode extends FlatSpec with ShouldMatchers {
     repl.executeLine("(fib 15)") should equal (610)
   }
 
+  "Merge sort" should "work" in {
+
+    repl.execute(
+      """
+      (define msort 
+        (lambda (list) 
+          (if (<= (length list) 1) 
+            list 
+            (begin 
+              (define split (/ (length list) 2)) 
+              (merge 
+                (msort (subseq list 0 split)) 
+                (msort (subseq list split)) 
+              ) 
+            ) 
+          ) 
+        )
+      )
+    
+      (define merge
+        (lambda (a b)
+          (if (< (length a) 1)
+            b
+            (if (< (length b) 1)
+              a
+              (if (< (car a) (car b))
+                (cons (car a) (merge (cdr a) b))
+                (cons (car b) (merge a (cdr b)))
+              )
+            )
+          )
+        )
+      )""")
+
+    repl.executeLine("(merge '(1 4) '())") should equal (List(1, 4))
+    repl.executeLine("(merge '() '(1 4))") should equal (List(1, 4))
+    repl.executeLine("(merge '(1 4) '(2 3))") should equal (List(1, 2, 3, 4))
+
+    repl.executeLine("(msort '(5 7 2 1 3 4 6))") should equal (List(1, 2, 3, 4, 5, 6, 7))
+  }
+
 }
