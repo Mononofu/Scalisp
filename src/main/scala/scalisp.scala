@@ -64,7 +64,7 @@ class REPL {
   val parser = new LispParser()
 
   // load builtins defined in lisp
-  execute(io.Source.fromFile("builtins.l").mkString)
+  execute(io.Source.fromFile("builtins.lisp").mkString)
 
   def execute(l: String) = {
     val ast = parser.parse(l.replaceAll(";[^\n$]*", " ").replace("\n", " "))
