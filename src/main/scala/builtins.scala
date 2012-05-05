@@ -35,6 +35,11 @@ object Builtins {
     l.map(e => Interpreter.eval(e, env)).toNumeric.reduce(f)
   }
 
+  def argCount(l: List[Any], n: Int) {
+    if(l.length - 1 != n) throw new InterpreterException(
+      "invalid number of arguments: expected %d, got %d".format(n, l.length - 1))
+  }
+
   def builtins(l: List[Any], env: Env): PartialFunction[String, Any] = {
     // arithmetic
     case "+" => op(l.tail, _ + _, env)
@@ -53,31 +58,31 @@ object Builtins {
     case "=" => l.tail.map(e => Interpreter.eval(e, env)).distinct.length == 1
     case "!=" => l.tail.map(e => Interpreter.eval(e, env)).distinct.length > 1
 
-    case "atom" => Interpreter.eval(l(1), env) match {
+    case "atom" => argCount(l, 1); Interpreter.eval(l(1), env) match {
       case l: List[Any] => false
       case _ => true
     }
 
     // string furnctions
-    case "to-string" => Interpreter.eval(l(1), env).toString
+    case "to-string" => argCount(l, 1); Interpreter.eval(l(1), env).toString
     case "concat" => l.tail.map(e => Interpreter.eval(e, env)).mkString
 
     // list functions
-    case "car" => Interpreter.eval(l(1), env) match {
+    case "car" => argCount(l, 1); Interpreter.eval(l(1), env) match {
       case l: List[Any] => l.head
       case s: String => s.head
       case Literal(s) => s.head
       case _ => throw new TypeError("can't get head of non-list")
     }
 
-    case "cdr" => Interpreter.eval(l(1), env) match {
+    case "cdr" => argCount(l, 1); Interpreter.eval(l(1), env) match {
       case l: List[Any] => l.tail
       case s: String => s.tail
       case Literal(s) => s.tail
       case _ => throw new TypeError("can't get tail of non-list")
     }
 
-    case "cons" => Interpreter.eval(l(2), env) match {
+    case "cons" => argCount(l, 2); Interpreter.eval(l(2), env) match {
       case list: List[Any] => Interpreter.eval(l(1), env) :: list
       case _ => throw new TypeError("can't cons to non-list")
     }
@@ -89,7 +94,7 @@ object Builtins {
 
     case "list" => l.tail.map(e => Interpreter.eval(e, env))
 
-    case "shuffle" => Interpreter.eval(l(1), env) match {
+    case "shuffle" => argCount(l, 1); Interpreter.eval(l(1), env) match {
       case list: List[Any] => util.Random.shuffle(list)
       case _ => throw new TypeError("can't shuffle a non-list")
     }

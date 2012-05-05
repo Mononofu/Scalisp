@@ -89,4 +89,27 @@ class ProcedureSpec extends FlatSpec with ShouldMatchers {
 		evaluating { repl.executeLine("(append '(1 2) 2 3)") } should produce [TypeError]
 	}
 
+	"range" should "create a range of numbers" in {
+		repl.executeLine("(range 5)") should equal (List(0, 1, 2, 3, 4))
+		repl.executeLine("(range 5 10)") should equal (List(5, 6, 7, 8, 9))
+	}
+
+	"length" should "return the length of a list" in {
+		repl.executeLine("(length (range 10))") should equal (10)
+	}
+
+	"map" should "map the values of a list" in {
+		repl.executeLine("(map (lambda (a) (+ a 5)) (range 5))") should equal (List(5, 6, 7, 8, 9))
+	}
+
+	"foldl" should "fold a list" in {
+		repl.executeLine("(foldl '+ 0 (range 5))") should equal (10)
+		repl.executeLine("(foldl '* 1 (range 1 5))") should equal (24)
+	}
+
+	"filter" should "filter a list" in {
+		repl.executeLine("(filter (lambda (a) (> a 5)) (range 10))") should equal (
+			List(6, 7, 8, 9))
+	}
+
 }

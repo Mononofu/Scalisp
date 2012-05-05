@@ -55,3 +55,13 @@
     (foldl f (f acc (car seq)) (cdr seq))
   )
 )
+
+(defun filter (f seq)
+  (if (= '() seq)
+    '()
+    (if (f (car seq))
+      (cons (car seq) (filter f (cdr seq)))
+      (filter f (cdr seq))
+    )
+  )
+)
