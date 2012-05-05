@@ -20,7 +20,9 @@ produces 3628800
 
 Also, Merge sort can be implemented without a problem:
 
-```
+```lisp
+; note that you can also use comments
+; and split functions over multiple lines for readability
 (define msort 
   (lambda (list) 
     (if (<= (length list) 1) 
@@ -36,6 +38,7 @@ Also, Merge sort can be implemented without a problem:
   )
 )
 
+; ordering is not important, as functions are evaluated lazily
 (define merge
   (lambda (a b)
     (if (< (length a) 1)
@@ -57,3 +60,11 @@ Usage is just like you'd expect
 	(msort '(5 7 2 1 3 4 6))
 
 And results in `'(1 2 3 4 5 6 7)`
+
+It's also possible to execute files, simply do
+
+	scalisp filename.l
+
+or, from the sbt-console
+
+	run filename.l
