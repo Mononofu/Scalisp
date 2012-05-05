@@ -35,27 +35,39 @@ class REPL {
   val parser = new LispParser()
 
   def execute(l: String) = {
-    val ast = parser.parse(l.replace("\n", " "))
+    val ast = parser.parse(l.replaceAll(";[^\n$]*", " ").replace("\n", " "))
+
     ast.map(e => Interpreter.eval(e, defaultEnv))
   }
 
-  def executeLine(l: String) = execute(l).last
+  def executeLine(l: String) = {
+    val r = execute(l)
+    if(r.length < 1) () else r.last
+  }
 }
 
-object Scalisp extends App {
-  val consoleReader = new jline.console.ConsoleReader()
+object Scalisp {
   val repl = new REPL()
 
-  Iterator.continually(consoleReader.readLine("scalisp> ")).takeWhile(_ != "").foreach {
-    case "exit" | null => sys.exit(0)
-    case line => 
-      try {
-        println(repl.executeLine(line))
+  def main(args: Array[String]) {
+    if(args.length > 0) {
+      val input = io.Source.fromFile(args(0)).mkString
+      repl.execute(input)
+    }
+    else {
+      val consoleReader = new jline.console.ConsoleReader()
+      
+      Iterator.continually(consoleReader.readLine("scalisp> ")).takeWhile(_ != "").foreach {
+        case "exit" | null => sys.exit(0)
+        case line => 
+          try {
+            println(repl.executeLine(line))
+          }
+          catch {
+            case e: InterpreterException => println(e)
+            case e: MatchError => println(e)
+          }
       }
-      catch {
-        case e: InterpreterException => println(e)
-        case e: MatchError => println(e)
-      }
+    }
   }
-
 }
