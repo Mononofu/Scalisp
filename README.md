@@ -34,7 +34,7 @@ Also, Merge sort can be implemented without a problem:
       ) 
     )
   )
-
+  
   (define merge
     (lambda (a b)
       (if (< (length a) 1)
