@@ -49,7 +49,7 @@ class Env(parent: Env) {
       }
       case f => f
     }
-    case v => throw new TypeError(k + " is not a function, " + v)
+    case _ => None
   }
 }
 

@@ -41,3 +41,17 @@
   )
 )
 
+
+(defun map (f seq)
+  (if (= '() seq)
+    '()
+    (cons (f (car seq)) (map f (cdr seq)))
+  )
+)
+
+(defun foldl (f acc seq)
+  (if (= '() seq)
+    acc
+    (foldl f (f acc (car seq)) (cdr seq))
+  )
+)

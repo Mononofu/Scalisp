@@ -61,7 +61,17 @@ object Interpreter {
   def userFunctions(l: List[Any], env: Env): PartialFunction[String, Any] = {
     // eval user functions
     case s: String => env.getFunction(s, l.tail.length) match {
-      case None => throw new MethodNotFound(s)
+      case None => 
+        val b = Builtins.builtins(l, env)
+        val fname = env(s) match {
+          case Some(s: String) => s
+          case _ => throw new MethodNotFound(s)
+        }
+        if( b.isDefinedAt(fname)) {
+          b(fname)
+        } else {
+          throw new MethodNotFound(s)
+        }
       case Some(Function(parms, body)) => 
         val context = new Env(env)
         val args = l.tail.map(e => eval(e, env))

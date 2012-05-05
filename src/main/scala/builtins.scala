@@ -1,6 +1,5 @@
 package Scalisp
 
-
 class MySeq[T](l: Seq[T]) {
   def toNumeric = try {
       l.map {
@@ -54,13 +53,14 @@ object Builtins {
     case "=" => l.tail.map(e => Interpreter.eval(e, env)).distinct.length == 1
     case "!=" => l.tail.map(e => Interpreter.eval(e, env)).distinct.length > 1
 
-    case "atom" => l(1) match {
+    case "atom" => Interpreter.eval(l(1), env) match {
       case l: List[Any] => false
       case _ => true
     }
 
-    case "to-string" => l(1).toString
-
+    // string furnctions
+    case "to-string" => Interpreter.eval(l(1), env).toString
+    case "concat" => l.tail.map(e => Interpreter.eval(e, env)).mkString
 
     // list functions
     case "car" => Interpreter.eval(l(1), env) match {
