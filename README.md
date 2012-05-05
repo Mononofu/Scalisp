@@ -20,35 +20,37 @@ produces 3628800
 
 Also, Merge sort can be implemented without a problem:
 
-	(define msort 
-    (lambda (list) 
-      (if (<= (length list) 1) 
-        list 
-        (begin 
-          (define split (/ (length list) 2)) 
-          (merge 
-            (msort (subseq list 0 split)) 
-            (msort (subseq list split)) 
-          ) 
+```
+(define msort 
+  (lambda (list) 
+    (if (<= (length list) 1) 
+      list 
+      (begin 
+        (define split (/ (length list) 2)) 
+        (merge 
+          (msort (subseq list 0 split)) 
+          (msort (subseq list split)) 
         ) 
       ) 
-    )
+    ) 
   )
-  
-  (define merge
-    (lambda (a b)
-      (if (< (length a) 1)
-        b
-        (if (< (length b) 1)
-          a
-          (if (< (car a) (car b))
-            (cons (car a) (merge (cdr a) b))
-            (cons (car b) (merge a (cdr b)))
-          )
+)
+
+(define merge
+  (lambda (a b)
+    (if (< (length a) 1)
+      b
+      (if (< (length b) 1)
+        a
+        (if (< (car a) (car b))
+          (cons (car a) (merge (cdr a) b))
+          (cons (car b) (merge a (cdr b)))
         )
       )
     )
   )
+)
+```
 
 Usage is just like you'd expect
 
