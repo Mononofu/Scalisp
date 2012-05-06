@@ -60,6 +60,7 @@ class REPL {
     override val map = collection.mutable.Map[String, Any]( 
       "true" -> true, "false" -> false,
       "+" -> "+", "-" -> "-", "*" -> "*", "/" -> "/", "%" -> "%",
+      ">" -> ">", ">=" -> ">=", "<" -> "<", "<=" -> "<=",  "=" -> "=",  "!=" -> "!=",
       "min" -> "min", "max" -> "max"
     ) 
   }
@@ -96,12 +97,17 @@ object Scalisp {
 
   val repl = new REPL()
 
+  val builtinNames = List("car", "cdr", "cons", "append", "list", "shuffle",
+    "print", "to-string", "concat", "atom")
+
   def main(args: Array[String]) {
     try {
       parser.parse(args)
       input.value match {
         case List() => 
           val consoleReader = new jline.console.ConsoleReader()
+          val completer = new StringsCompleter(builtinNames ++ repl.defaultEnv.map.keys)
+          consoleReader.addCompleter(completer);
           Iterator.continually(consoleReader.readLine("scalisp> ")).takeWhile(_ != "").foreach {
             case "exit" | null => sys.exit(0)
             case line => 
@@ -109,7 +115,7 @@ object Scalisp {
                 var src = line
                 // make sure expressions are balanced
                 while(src.count(_ == '(') != src.count(_ == ')')) {
-                  val in = consoleReader.readLine("       | ")
+                  val in = consoleReader.readLine("       | " )
 
                   if(in == null || in.length == 0)
                     // this will throw an exception
@@ -117,6 +123,7 @@ object Scalisp {
                   src += " " + in
                 }
                 println(repl.executeLine(src))
+                completer.setStrings(repl.defaultEnv.map.keys)
               }
               catch {
                 case e: InterpreterException => println(e)
