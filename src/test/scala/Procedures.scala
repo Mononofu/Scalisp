@@ -103,13 +103,13 @@ class ProcedureSpec extends FlatSpec with ShouldMatchers {
 	}
 
 	"foldl" should "fold a list" in {
-		repl.executeLine("(foldl '+ 0 (range 5))") should equal (10)
-		repl.executeLine("(foldl '* 1 (range 1 5))") should equal (24)
+		repl.executeLine("(foldl + 0 (range 5))") should equal (10)
+		repl.executeLine("(foldl * 1 (range 1 5))") should equal (24)
 	}
 
 	"reduce" should "should act like fold, but with no initial value" in {
-		repl.executeLine("(reduce '+ (range 5))") should equal (10)
-		repl.executeLine("(reduce '* (range 1 5))") should equal (24)
+		repl.executeLine("(reduce + (range 5))") should equal (10)
+		repl.executeLine("(reduce * (range 1 5))") should equal (24)
 	}
 
 	"filter" should "filter a list" in {

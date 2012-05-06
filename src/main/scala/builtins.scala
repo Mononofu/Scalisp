@@ -47,8 +47,8 @@ object Builtins {
     case "-" => op(l.tail, _ - _, env)
     case "/" => op(l.tail, _ / _, env)
     case "%" => op(l.tail, _ % _, env)
-    case "min" => l.tail.toNumeric.min
-    case "max" => l.tail.toNumeric.max
+    case "min" => l.tail.map(e => Interpreter.eval(e, env)).toNumeric.min
+    case "max" => l.tail.map(e => Interpreter.eval(e, env)).toNumeric.max
 
     // comparisons
     case "<" => compare(_ < _, -1, l.tail, env)

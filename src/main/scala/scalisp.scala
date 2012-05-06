@@ -58,18 +58,17 @@ class Env(parent: Env) {
 class REPL {
   val defaultEnv = new Env(null) {
     override val map = collection.mutable.Map[String, Any]( 
-      "true" -> true,
-      "false" -> false
+      "true" -> true, "false" -> false,
+      "+" -> "+", "-" -> "-", "*" -> "*", "/" -> "/", "%" -> "%",
+      "min" -> "min", "max" -> "max"
     ) 
   }
-
-  val parser = new LispParser()
 
   // load builtins defined in lisp
   execute(io.Source.fromFile("builtins.lisp").mkString)
 
   def execute(l: String) = {
-    val ast = parser.parse(l.replaceAll(";[^\n$]*", " ").replace("\n", " "))
+    val ast = LispParser.parse(l.replaceAll(";[^\n$]*", " ").replace("\n", " "))
     ast.map(e => Interpreter.eval(e, defaultEnv))
   }
 
@@ -118,7 +117,7 @@ object Scalisp {
           case filename => 
             val src = io.Source.fromFile(filename).mkString
             compile.value match {
-              case Some(true) => Compiler.compile(src)
+              case Some(true) => ScalipsCompiler.compile(src)
               case _ => repl.execute(src)
             }              
         }

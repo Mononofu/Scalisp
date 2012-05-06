@@ -4,7 +4,7 @@ import scala.util.parsing.combinator._
 
 case class Literal(l: String) { }
 
-class LispParser extends JavaTokenParsers {
+object LispParser extends JavaTokenParsers {
   def parse(line: String) = parseAll(program, line) match {
     case Success(r, _) => r
   }
