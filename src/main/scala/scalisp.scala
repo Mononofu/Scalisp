@@ -106,7 +106,17 @@ object Scalisp {
             case "exit" | null => sys.exit(0)
             case line => 
               try {
-                println(repl.executeLine(line))
+                var src = line
+                // make sure expressions are balanced
+                while(src.count(_ == '(') != src.count(_ == ')')) {
+                  val in = consoleReader.readLine("       | ")
+
+                  if(in == null || in.length == 0)
+                    // this will throw an exception
+                    println(repl.executeLine(src))
+                  src += " " + in
+                }
+                println(repl.executeLine(src))
               }
               catch {
                 case e: InterpreterException => println(e)
