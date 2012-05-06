@@ -13,3 +13,5 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies <+= scalaVersion apply ("org.scala-lang" % "jline" % _)
+
+libraryDependencies += "org.clapper" %% "argot" % "0.4"

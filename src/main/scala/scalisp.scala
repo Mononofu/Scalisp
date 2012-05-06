@@ -1,6 +1,8 @@
 package Scalisp
 
 import scala.tools.jline
+import org.clapper.argot._
+import java.io.File
 
 class Env(parent: Env) {
   val map = collection.mutable.Map[String, Any]()
@@ -78,33 +80,51 @@ class REPL {
 }
 
 object Scalisp {
+  import ArgotConverters._
+  val parser = new ArgotParser("scalisp", preUsage=Some("Version 1.0"))
+  val compile = parser.flag[Boolean](List("c", "compile"),
+                                   "Compile instead of interpret")
+  val input = parser.multiParameter[String]("input",
+                                        "Input files to read. If not " +
+                                        "specified, use stdin.",
+                                        true) { 
+    case (s, opt) =>
+      val file = new File(s)
+      if (! file.exists)
+          parser.usage("Input file \"" + s + "\" does not exist.")
+      s
+  }
+
   val repl = new REPL()
 
   def main(args: Array[String]) {
-    if(args.length > 0) {
-      val input = io.Source.fromFile(args(0)).mkString
-      try {
-        repl.execute(input)
-      }
-      catch {
-        case e: InterpreterException => println(e)
-        case e: MatchError => println(e)
-      }
-    }
-    else {
-      val consoleReader = new jline.console.ConsoleReader()
-      
-      Iterator.continually(consoleReader.readLine("scalisp> ")).takeWhile(_ != "").foreach {
-        case "exit" | null => sys.exit(0)
-        case line => 
-          try {
-            println(repl.executeLine(line))
+    try {
+      parser.parse(args)
+      input.value match {
+        case List() => 
+          val consoleReader = new jline.console.ConsoleReader()
+          Iterator.continually(consoleReader.readLine("scalisp> ")).takeWhile(_ != "").foreach {
+            case "exit" | null => sys.exit(0)
+            case line => 
+              try {
+                println(repl.executeLine(line))
+              }
+              catch {
+                case e: InterpreterException => println(e)
+                case e: MatchError => println(e)
+              }
           }
-          catch {
-            case e: InterpreterException => println(e)
-            case e: MatchError => println(e)
-          }
+        case l: List[String] => l.foreach { 
+          case filename => 
+            val src = io.Source.fromFile(filename).mkString
+            compile.value match {
+              case Some(true) => Compiler.compile(src)
+              case _ => repl.execute(src)
+            }              
+        }
       }
+    } catch {
+      case e: ArgotUsageException => println(e.message)
     }
   }
 }
