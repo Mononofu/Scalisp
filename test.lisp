@@ -54,3 +54,11 @@
 (defun echo (n) (+ n 1))
 (print (echo 10))
 (print (echo 20.5))
+
+(print "macros")
+(defmacro square (X) (* ,X ,X))
+(print (square 5))
+
+(defmacro square+ (X) 
+  (let (x) (,X) (* x x)))
+(print (square+ (begin (print "executed") 5)))

@@ -74,7 +74,7 @@ class REPL {
 
   def execute(l: String) = {
     val ast = LispParser.parse(l.replaceAll(";[^\n$]*", " ").replace("\n", " "))
-    ast.map(e => Interpreter.eval(e, defaultEnv))
+    Preprocessor.process(ast).map(e => Interpreter.eval(e, defaultEnv))
   }
 
   def executeLine(l: String) = {

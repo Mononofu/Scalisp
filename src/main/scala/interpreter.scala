@@ -58,6 +58,20 @@ object Interpreter {
       }
       case _ => throw new InvalidName("function name has to be a string")
     }
+    case "let" => l(1) match {
+      case names: List[String] => l(2) match {
+        case vals: List[Any] => 
+          val body = l(3)
+          val context = new Env(env)
+          val args = vals.map(e => eval(e, env))
+          names.zip(args).foreach {
+            case (param: String, value: Any) => context.define(param, value)
+          }
+          eval(body, context)
+        case _ => throw new InterpreterException("let values have to be a list")
+      }
+      case _ => throw new InterpreterException("let names have to be a list of strings")
+    }
   }
 
   def userFunctions(l: List[Any], env: Env): PartialFunction[String, Any] = {

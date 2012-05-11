@@ -20,6 +20,7 @@ object LispParser extends JavaTokenParsers {
     | quote
     | literal
     | list
+    | replacement
     | token
     )
   def integer: Parser[Long] = wholeNumber ^^ (n => n.toLong)
@@ -29,4 +30,5 @@ object LispParser extends JavaTokenParsers {
   def token: Parser[String] = """[^() ]+""".r ^^ (n => n.toString)
   def literal: Parser[Literal] = stringLiteral ^^ (l => Literal(l.tail.init))
   def quote = "'"~>exp ^^ (e => List("quote", e))
+  def replacement = ","~>token ^^ (t => Replace(t))
 }
