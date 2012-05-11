@@ -72,8 +72,6 @@ class MyAny(a: Any) {
 
 }
 
-
-
 case class Literal(s: String)
 
 object CompiledBuiltins {

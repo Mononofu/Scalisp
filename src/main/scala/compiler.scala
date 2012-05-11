@@ -17,8 +17,6 @@ object ScalispCompiler {
     println(higher_order_funs)
 
     """
-package CompiledApp
-
 object LispApp extends App {
   import CompiledBuiltins._
   import Helper._
