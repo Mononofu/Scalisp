@@ -8,9 +8,12 @@ import java.io.PrintWriter
 class Env(parent: Env) {
   val map = collection.mutable.Map[String, Any]()
 
+
+  override def toString = map.mkString("\n")
+
   def update(k: String, v: Any) { 
     map.get(k) match {
-      case Some(_) => println("updating to: " + v); map(k) = v
+      case Some(_) => map(k) = v
       case None => parent match {
         case null => throw new VariableNotFound(k)
         case p => p(k) = v

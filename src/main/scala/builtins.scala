@@ -60,15 +60,20 @@ object Builtins {
       "invalid number of arguments: expected %d, got %d".format(n, l.length - 1))
   }
 
+  val ops = List("+", "-", "*", "/", "%", "min", "max")
+
   def builtins(l: List[Any], env: Env): PartialFunction[String, Any] = {
     // arithmetic
-    case "+" => if(l.tail.allLong) opL(l.tail, _ + _, env) else  opD(l.tail, _ + _, env)
-    case "*" => if(l.tail.allLong) opL(l.tail, _ * _, env) else  opD(l.tail, _ * _, env)
-    case "-" => if(l.tail.allLong) opL(l.tail, _ - _, env) else  opD(l.tail, _ - _, env)
-    case "/" => if(l.tail.allLong) opL(l.tail, _ / _, env) else  opD(l.tail, _ / _, env)
-    case "%" => if(l.tail.allLong) opL(l.tail, _ % _, env) else  opD(l.tail, _ % _, env)
-    case "min" => if(l.tail.allLong) l.tail.eval(env).toLong.min else l.tail.eval(env).toDouble.min
-    case "max" => if(l.tail.allLong) l.tail.eval(env).toLong.max else l.tail.eval(env).toDouble.max
+    case op: String if ops.contains(op) =>
+      val args = l.tail.eval(env)
+      op match {
+        case "+" => if(args.allLong) args.toLong.reduce(_ + _) else args.toDouble.reduce(_ + _)
+        case "-" => if(args.allLong) args.toLong.reduce(_ - _) else args.toDouble.reduce(_ - _)
+        case "*" => if(args.allLong) args.toLong.reduce(_ * _) else args.toDouble.reduce(_ * _)
+        case "/" => if(args.allLong) args.toLong.reduce(_ / _) else args.toDouble.reduce(_ / _)
+        case "min" => if(args.allLong) args.toLong.min else args.toDouble.min
+        case "max" => if(args.allLong) args.toLong.max else args.toDouble.max
+      }
 
     // comparisons
     case "<" => compare(_ < _, -1, l.tail, env)
@@ -120,5 +125,7 @@ object Builtins {
     }
 
     case "print" => println(l.tail.eval(env).mkString)
+
+    case "dump-env" => println(env)
   }
 }

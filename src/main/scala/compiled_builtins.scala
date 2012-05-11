@@ -1,3 +1,4 @@
+package CompiledApp
 
 class TypeError(s: String) extends Exception(s) { }
 
@@ -41,19 +42,19 @@ class MyAny(a: Any) {
   def <=(that: Any) = compare(_ <= _, -1, List(a, that))
   def >(that: Any) = compare(_ > _, -1, List(a, that))
   def <(that: Any) = compare(_ < _, -1, List(a, that))
-  def -(that: Any) = {
+  def -(that: Any): Any = {
     val l = List(a, that)
     if(l.allLong) opL(l, _ - _) else  opD(l, _ - _)
   }
-  def +(that: Any) = {
+  def +(that: Any): Any = {
     val l = List(a, that)
     if(l.allLong) opL(l, _ + _) else  opD(l, _ + _)
   }
-  def /(that: Any) = {
+  def /(that: Any): Any = {
     val l = List(a, that)
     if(l.allLong) opL(l, _ / _) else  opD(l, _ / _)
   }
-  def *(that: Any) = {
+  def *(that: Any): Any = {
     val l = List(a, that)
     if(l.allLong) opL(l, _ * _) else  opD(l, _ * _)
   }

@@ -14,6 +14,8 @@ class FunctionTable() {
   val fs = collection.mutable.Map[Int, Function]()
   def add(f: Function) { fs(f.arity) = f }
   def apply(arity: Int): Option[Function] = fs.get(arity)
+
+  override def toString = "Function table: " + fs.mkString("\n")
 }
 
 object Interpreter {
@@ -76,7 +78,7 @@ object Interpreter {
         val context = new Env(env)
         val args = l.tail.map(e => eval(e, env))
         parms.zip(args).foreach {
-          case (param: String, value) => context.define(param, value)
+          case (param: String, value: Any) => context.define(param, value)
         }
         eval(body, context)
       }

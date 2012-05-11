@@ -5,7 +5,7 @@
 
 (defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2)))))
 
-(print "20th fibonacci number: " (fib 20))
+(print "20th fibonacci number: " (fib 10))
 
 
 ; note that you can also use comments
@@ -49,3 +49,8 @@
 
 (print "complex arithmetic")
 (print (+ (* (+ 1 2) (- 4 1)) 10))
+
+(print "test long/double typing")
+(defun echo (n) (+ n 1))
+(print (echo 10))
+(print (echo 20.5))
