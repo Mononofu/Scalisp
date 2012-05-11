@@ -12,12 +12,12 @@ object ScalispCompiler {
     // strip comments and replace newlines with spaces
     val ast = LispParser.parse(src.replaceAll(";[^\n$]*", " ").replace("\n", " "))
 
-    val code = ast.map(e => process(e)).mkString("\n\n  ")
+    val code = Preprocessor.process(ast).map(e => process(e)).mkString("\n\n  ")
 
     """
 object LispApp extends App {
-  import CompiledBuiltins._
-  import Helper._
+  import CompiledApp.CompiledBuiltins._
+  import CompiledApp.Helper._
 
   // user methods
   %s
@@ -63,7 +63,7 @@ object LispApp extends App {
         case name: String => "%s = %s".format(name, process(l(2)))
         case _ => throw new CompilerError("variable name has to be a string")
       }
-      case "begin" => l.tail.map(e => process(e)).mkString("\n" + indent)
+      case "begin" => l.tail.map(e => process(e, indent + "  ")).mkString("{\n  " + indent, "\n  " + indent, "\n" + indent + "}")
       case "quote" => stringify(l(1))
       case "lambda" => l(1) match {
         case parms: List[Any] => 
@@ -79,6 +79,19 @@ object LispApp extends App {
             ("(%s) => {\n" + indent + "  %s\n" + indent + "}").format(args, body)
         case _ => throw new CompilerError("lambda arguments have to be a list")
       }
+      case "let" => l(1) match {
+      case names: List[String] => l(2) match {
+        case vals: List[Any] => 
+          val body = l(3)
+
+          val prelude = names.zip(vals).map {
+            case (param: String, value: Any) => "val %s = %s".format(param, process(value, indent + "  "))
+          }
+          ("{\n" + indent + "  %s\n" + indent + "  %s\n" + indent + "}").format(prelude.mkString("\n  " + indent), process(body, indent + "  "))
+        case _ => throw new CompilerError("let values have to be a list")
+      }
+      case _ => throw new CompilerError("let names have to be a list of strings")
+    }
       case "defun" => l(1) match {
         case name: String => l(2) match {
           case parms: List[Any] => 
