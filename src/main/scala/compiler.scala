@@ -14,8 +14,6 @@ object ScalispCompiler {
 
     val code = ast.map(e => process(e)).mkString("\n\n  ")
 
-    println(higher_order_funs)
-
     """
 object LispApp extends App {
   import CompiledBuiltins._
