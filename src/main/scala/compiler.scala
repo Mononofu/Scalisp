@@ -12,7 +12,7 @@ object ScalispCompiler {
     // strip comments and replace newlines with spaces
     val ast = LispParser.parse(src.replaceAll(";[^\n$]*", " ").replace("\n", " "))
 
-    val code = Preprocessor.process(ast).map(e => process(e)).mkString("\n\n  ")
+    val code = Preprocessor.process(ast).map(e => process(e)).filter(_.length > 0).mkString("\n\n  ")
 
     """
 object LispApp extends App {
