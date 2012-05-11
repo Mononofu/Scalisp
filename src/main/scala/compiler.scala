@@ -1,80 +1,156 @@
 package Scalisp
 
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+class CompilerError(s: String) extends Exception(s) { }
 
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
+object ScalispCompiler {
+  var global_functions = List[String]()
+  var higher_order_funs = collection.mutable.Map[String, 
+    collection.mutable.Map[Int, Int]]().withDefault(_ =>  collection.mutable.Map[Int, Int]())
 
-object ScalipsCompiler {
-  def compile(src: String) = {
+
+  def compile(src: String, filename: String) = {
     // strip comments and replace newlines with spaces
     val ast = LispParser.parse(src.replaceAll(";[^\n$]*", " ").replace("\n", " "))
 
-    val h = new Hello
-    h.generate
-  }
+    val code = ast.map(e => process(e)).mkString("\n\n  ")
+
+    println(higher_order_funs)
+
+    """
+package CompiledApp
+
+object LispApp extends App {
+  import CompiledBuiltins._
+  import Helper._
+
+  // user methods
+  %s
+
+  // main code
+  %s
 }
-
-class Hello extends ClassLoader with Opcodes {
-  val cw = new ClassWriter(ClassWriter.COMPUTE_MAXS)
-  var mg: GeneratorAdapter = _
-
-  def generate_if(cond: Any, true_branch: Any, false_branch: Any) {
-    val args = new java.util.ArrayList[Compiler.Expression];
-    mg.invokeStatic(Type.getType("SpecialForms"), Method.getMethod("Expression _if()"));
+  """.format(global_functions.mkString("\n\n  "), code)
   }
 
-  def generate() {
-
-    import Opcodes._
-
-   
-    cw.visit(V1_1, ACC_PUBLIC, "Example", null, "java/lang/Object", null);
-
-    // creates a GeneratorAdapter for the (implicit) constructor
-    var m = Method.getMethod("void <init> ()");
-    var mg = new GeneratorAdapter(ACC_PUBLIC,
-            m,
-            null,
-            null,
-            cw);
-    mg.loadThis();
-    mg.invokeConstructor(Type.getType(classOf[Object]), m);
-    mg.returnValue();
-    mg.endMethod();
-
-    m = Method.getMethod("int calc ()");
-    mg = new GeneratorAdapter(ACC_PUBLIC + ACC_STATIC, m, null, null, cw);
-    mg.push(5);
-    mg.returnValue();
-    mg.endMethod();
-
-    // creates a GeneratorAdapter for the 'main' method
-    m = Method.getMethod("void main (String[])");
-    mg = new GeneratorAdapter(ACC_PUBLIC + ACC_STATIC, m, null, null, cw);
-    mg.getStatic(Type.getType(classOf[System]),
-            "out",
-            Type.getType(classOf[PrintStream]));
-    //mg.push("Hello world! ");
-    mg.invokeStatic(Type.getType("Example"), Method.getMethod("int calc()"));
-    mg.invokeVirtual(Type.getType(classOf[PrintStream]),
-            Method.getMethod("void println (int)"));
-    mg.returnValue();
-    mg.endMethod();
-
-    cw.visitEnd();
-
-    val code = cw.toByteArray();
-    val loader = new Hello();
-    val exampleClass = loader.defineClass("Example", code, 0, code.length);
-
-    // uses the dynamically generated class to print 'Helloworld'
-    exampleClass.getMethods()(0).invoke(null, Array(null):_*);
+  def isFunction(name: String, body: Any): Int = body match {
+    case n :: tail if n == name => tail.length
+    case Nil => -1
+    case l: List[Any] => l.map(e => isFunction(name, e)).max
+    case _ => -1
   }
 
+  case class UsedIn(name: String, argPos: Int)
+  def usedInFunction(name: String, exp: Any): Option[UsedIn] = exp match {
+    case Nil => None
+    case l: List[Any] => 
+      if(l.tail.contains(name))
+        l.head match {
+          case s: String => Some( UsedIn(s, l.indexOf(name) - 1) )
+          case _ => None
+        }
+        
+      else
+        l.tail.map(e => usedInFunction(name, e)).flatten.headOption
+    case _ => None
+  }
+
+
+  def process(exp: Any, indent: String = "  "): String = exp match {
+    case l: List[Any] => l.head match {
+      // special forms
+      case "if" => ("if(%s) {\n" + indent + "  %s\n" + indent +"} else {\n" + indent + "  %s\n" + indent + "}").format( process(l(1)), process(l(2), indent + "  "), process(l(3), indent + "  ") )
+      case "define" => l(1) match {
+        case name: String => "var %s = %s".format(name, process(l(2)))
+        case _ => throw new CompilerError("variable name has to be a string")
+      }
+      case "set!" => l(1) match {
+        case name: String => "%s = %s".format(name, process(l(2)))
+        case _ => throw new CompilerError("variable name has to be a string")
+      }
+      case "begin" => l.tail.map(e => process(e)).mkString("\n" + indent)
+      case "quote" => stringify(l(1))
+      case "lambda" => l(1) match {
+        case parms: List[Any] => 
+          val p = parms.map {
+            case n: String => n
+            case _ => throw new CompilerError("parm names have to be strings")
+          }
+          val args = p.map(_ + ": Any").mkString(", ")
+          val body = process(l(2), indent + "  ")
+          if(body.length < 20)
+            "(%s) => { %s }".format(args, body)
+          else
+            ("(%s) => {\n" + indent + "  %s\n" + indent + "}").format(args, body)
+        case _ => throw new CompilerError("lambda arguments have to be a list")
+      }
+      case "defun" => l(1) match {
+        case name: String => l(2) match {
+          case parms: List[Any] => 
+            val p = parms.map {
+              case n: String => n
+              case _ => throw new CompilerError("parm names have to be strings")
+            }
+            val args = p.map(n => isFunction(n, l(3))).zip(p).zipWithIndex.map {
+              case ((-1, name: String), _) => 
+                name + (usedInFunction(name, l(3)) match {
+                  case Some(UsedIn(name, pos)) => 
+                    if(higher_order_funs.contains(name))
+                      ": (%s) => Any".format(
+                      (0 until higher_order_funs(name)(pos)).map(_ => "Any").mkString(", ") )
+                    else
+                      ": Any"
+                  case _ => ": Any"
+                })
+              case ((n: Int, pname: String), i: Int) => 
+                val m = higher_order_funs(name)
+                m(i) = n
+                higher_order_funs(name) = m
+                pname + ": (%s) => Any".format(
+                  (0 until n).map(_ => "Any").mkString(", ") )
+            }
+            global_functions = ("def %s(%s): Any = {\n" + indent + "  %s\n" + indent + "}").format(name, 
+                         args.mkString(", "), 
+                         process(l(3), indent + "  ")) :: global_functions
+            ""
+          case _ => throw new CompilerError("function arguments have to be a list")
+        }
+        case _ => throw new CompilerError("function name has to be a string")
+      }
+
+      // function call
+      // replace simple functions by operators for prettier code
+      case "+" => l.tail.map(e => process(e)).mkString(" + ")
+      case "-" => l.tail.map(e => process(e)).mkString(" - ")
+      case "/" => l.tail.map(e => process(e)).mkString(" / ")
+      case "*" => l.tail.map(e => process(e)).mkString(" / ")
+      case "append" => l.tail.map(e => process(e)).mkString(" ++ ")
+      case "cons" => l.tail.map(e => process(e)).mkString(" :: ")
+      case "<" if l.length == 3 => l.tail.map(e => process(e)).mkString(" < ")
+      case ">" if l.length == 3 => l.tail.map(e => process(e)).mkString(" > ")
+      case "<=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" <= ")
+      case ">=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" >= ")
+      case "=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" == ")
+      case "!=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" != ")
+
+      // other functions have to be called normally
+      case name: String => "%s(%s)".format(name, l.tail.map(e => process(e)).mkString(", "))
+    }
+
+    case s: String => s
+    // basic values
+    case n: Long => n.toString + "l"
+    case d: Double => d.toString
+    case Literal(l) => "\"" + l + "\""
+  }
+
+  def stringify(exp: Any): String = exp match {
+    case l: List[Any] => l.map(e => stringify(e)).mkString("List(", ", ", ")")
+
+    case s: String => "\"" + s + "\""
+
+    // basic values
+    case n: Long => n.toString + "l"
+    case d: Double => d.toString
+    case Literal(l) => "Literal(\"" + l + "\")"
+  }
 }

@@ -34,7 +34,7 @@ object Helper {
 import Helper._
 
 object Builtins {
-    def compare(
+  def compare(
     op: (Double, Double) => Boolean, 
     initOffset: Double, 
     n: Seq[Any],

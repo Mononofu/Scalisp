@@ -3,39 +3,35 @@
 
 (print "hello world")
 
-(define fib (lambda (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))))
+(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2)))))
 
 (print "20th fibonacci number: " (fib 20))
 
 
 ; note that you can also use comments
 ; and split functions over multiple lines for readability
-(define msort 
-  (lambda (list) 
-    (if (<= (length list) 1) 
-      list 
-      (begin 
-        (define split (/ (length list) 2)) 
-        (merge 
-          (msort (subseq list 0 split)) 
-          (msort (subseq list split)) 
-        ) 
+(defun msort (list) 
+  (if (<= (length list) 1) 
+    list 
+    (begin 
+      (define split (/ (length list) 2)) 
+      (merge 
+        (msort (subseq list 0 split)) 
+        (msort (subseq list split)) 
       ) 
     ) 
-  )
+  ) 
 )
 
 ; ordering is not important, as functions are evaluated lazily
-(define merge
-  (lambda (a b)
-    (if (< (length a) 1)
-      b
-      (if (< (length b) 1)
-        a
-        (if (< (car a) (car b))
-          (cons (car a) (merge (cdr a) b))
-          (cons (car b) (merge a (cdr b)))
-        )
+(defun merge (a b)
+  (if (< (length a) 1)
+    b
+    (if (< (length b) 1)
+      a
+      (if (< (car a) (car b))
+        (cons (car a) (merge (cdr a) b))
+        (cons (car b) (merge a (cdr b)))
       )
     )
   )

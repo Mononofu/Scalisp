@@ -3,6 +3,7 @@ package Scalisp
 import scala.tools.jline
 import org.clapper.argot._
 import java.io.File
+import java.io.PrintWriter
 
 class Env(parent: Env) {
   val map = collection.mutable.Map[String, Any]()
@@ -134,7 +135,14 @@ object Scalisp {
           case filename => 
             val src = io.Source.fromFile(filename).mkString
             compile.value match {
-              case Some(true) => ScalipsCompiler.compile(src)
+              case Some(true) => 
+                val code = ScalispCompiler.compile(src, filename)
+                val out = new PrintWriter( new File(filename.split('.').init :+ "scala" mkString ".") )
+                try { 
+                  out.print( code ) 
+                } finally{ 
+                  out.close 
+                }
               case _ => repl.execute(src)
             }              
         }
