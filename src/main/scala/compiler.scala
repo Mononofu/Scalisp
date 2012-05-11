@@ -115,23 +115,18 @@ object LispApp extends App {
 
       // function call
       // replace simple functions by operators for prettier code
-      case "+" => l.tail.map(e => process(e)).mkString(" + ")
-      case "-" => l.tail.map(e => process(e)).mkString(" - ")
-      case "/" => l.tail.map(e => process(e)).mkString(" / ")
-      case "*" => l.tail.map(e => process(e)).mkString(" / ")
+      case op: String if "+-*/%".contains(op) => l.tail.map(e => process(e)).mkString("(", " %s ".format(op), ")")
       case "append" => l.tail.map(e => process(e)).mkString(" ++ ")
       case "cons" => l.tail.map(e => process(e)).mkString(" :: ")
-      case "<" if l.length == 3 => l.tail.map(e => process(e)).mkString(" < ")
-      case ">" if l.length == 3 => l.tail.map(e => process(e)).mkString(" > ")
-      case "<=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" <= ")
-      case ">=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" >= ")
       case "=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" == ")
-      case "!=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" != ")
+      case comp: String if List("<", ">", "<=", ">=", "=", "!=").contains(comp) &&
+        l.length == 3 => l.tail.map(e => process(e)).mkString(" %s ".format(comp))
 
       // other functions have to be called normally
       case name: String => "%s(%s)".format(name, l.tail.map(e => process(e)).mkString(", "))
     }
 
+    case op: String if "+-*/%".contains(op) => "_ %s _".format(op)
     case s: String => s
     // basic values
     case n: Long => n.toString + "l"

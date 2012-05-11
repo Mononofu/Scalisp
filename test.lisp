@@ -42,3 +42,10 @@
 (print "and sort it: " (msort l))
 
 (print (length (range 10)))
+
+(print "test higher-order functions")
+(print (map (lambda (a) (* a a)) (range 10)))
+(print (reduce * (range 1 10)))
+
+(print "complex arithmetic")
+(print (+ (* (+ 1 2) (- 4 1)) 10))

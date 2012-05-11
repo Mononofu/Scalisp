@@ -1,4 +1,3 @@
-package CompiledApp
 
 class TypeError(s: String) extends Exception(s) { }
 

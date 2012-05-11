@@ -3,6 +3,7 @@ package Scalisp
 import scala.util.parsing.combinator._
 
 case class Literal(l: String) { }
+case class Replace(n: String)
 
 object LispParser extends JavaTokenParsers {
   def parse(line: String) = parseAll(program, line) match {
