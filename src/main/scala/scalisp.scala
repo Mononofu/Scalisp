@@ -123,7 +123,7 @@ object Scalisp {
                     println(repl.executeLine(src))
                   src += " " + in
                 }
-                println(repl.executeLine(src))
+                println("=> " + repl.executeLine(src))
                 completer.setStrings(repl.defaultEnv.map.keys)
               }
               catch {
