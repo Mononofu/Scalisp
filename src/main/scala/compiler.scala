@@ -25,7 +25,7 @@ object %s extends App {
   // main code
   %s
 }
-  """.format(filename, global_functions.mkString("\n\n  "), code)
+  """.format(filename.split("\\.").head, global_functions.mkString("\n\n  "), code)
   }
 
   def compileLine(src: String) = {

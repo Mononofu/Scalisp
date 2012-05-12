@@ -8,10 +8,22 @@
 			                                                      888       
 			                                                     o888o      
 
-A lisp interpreter written in Scala, inspired by [Peter Norvig](http://norvig.com/lispy.html)
+A lisp interpreter and compiler written in Scala, inspired by [Peter Norvig](http://norvig.com/lispy.html)
 
-It's very incomplete and probably buggy, but it works good enough to calculate
-factorials and stuff: 
+Download
+========
+
+You can either clone this repo and use `sbt` or you can download the precompiled
+`jar` and execute that.
+
+To be able to compile the resulting scala code, you should also download 
+`compiled_builtins.scala` and place it in the same directory as the compiled 
+`.scala` file.
+
+Interpeter
+==========
+
+It's a bit incomplete and probably buggy, but it works good enough to for most applications:
 
 ```lisp
 (define fact (lambda (n) (if (< n 2) 1 (* n (fact (- n 1))))))
@@ -72,3 +84,45 @@ It's also possible to execute files, simply do
 or, from the sbt-console
 
 	run filename.l
+
+Compiler
+========
+
+Instead of taking the traditional route and compiling to byte code (which 
+Clojure already does), I decided to compile to Scala instead. Just use `scalisp` 
+like you would for interpetation, but add the `-c` switch.
+
+For example, the compiled merge sort looks like this:
+
+```scala
+def merge(a: Any, b: Any): Any = {
+  if(length(a) < 1l) {
+    b
+  } else {
+    if(length(b) < 1l) {
+      a
+    } else {
+      if(car(a) < car(b)) {
+        car(a) :: merge(cdr(a), b)
+      } else {
+        car(b) :: merge(a, cdr(b))
+      }
+    }
+  }
+}
+
+def msort(list: Any): Any = {
+  if(length(list) <= 1l) {
+    list
+  } else {
+    {
+      var split = (length(list) / 2l)
+      merge(msort(subseq(list, 0l, split)), msort(subseq(list, split)))
+    }
+  }
+}
+```
+
+If you specify a whole file, you'll get a complete `.scala` file back, ready to
+be compiled. If you just execute `scalisp -c`, you get a REPL, which simply 
+compiles snippets of code.
