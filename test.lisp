@@ -62,3 +62,12 @@
 (defmacro square+ (X) 
   (let (x) (,X) (* x x)))
 (print (square+ (begin (print "executed") 5)))
+
+
+(defun unless-bad (cond exp)
+  (if cond unit exp))
+(unless-bad (= 5 5) (print "executed branch"))
+
+(defmacro unless (COND EXP)
+  (if ,COND unit ,EXP))
+(unless (= 5 5) (print "executed branch"))

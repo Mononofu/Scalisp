@@ -62,7 +62,7 @@ class Env(parent: Env) {
 class REPL {
   val defaultEnv = new Env(null) {
     override val map = collection.mutable.Map[String, Any]( 
-      "true" -> true, "false" -> false,
+      "true" -> true, "false" -> false, "unit" -> (),
       "+" -> "+", "-" -> "-", "*" -> "*", "/" -> "/", "%" -> "%",
       ">" -> ">", ">=" -> ">=", "<" -> "<", "<=" -> "<=",  "=" -> "=",  "!=" -> "!=",
       "min" -> "min", "max" -> "max"
