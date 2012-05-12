@@ -15,7 +15,7 @@ object ScalispCompiler {
     val code = Preprocessor.process(ast).map(e => process(e)).filter(_.length > 0).mkString("\n\n  ")
 
     """
-object LispApp extends App {
+object %s extends App {
   import CompiledApp.CompiledBuiltins._
   import CompiledApp.Helper._
 
@@ -25,7 +25,14 @@ object LispApp extends App {
   // main code
   %s
 }
-  """.format(global_functions.mkString("\n\n  "), code)
+  """.format(filename, global_functions.mkString("\n\n  "), code)
+  }
+
+  def compileLine(src: String) = {
+    global_functions = List()
+    val ast = LispParser.parse(src.replaceAll(";[^\n$]*", " ").replace("\n", " "))
+    val code = Preprocessor.process(ast).map(e => process(e)).filter(_.length > 0).mkString("\n\n  ")
+    global_functions.mkString("\n\n  ") + code
   }
 
   def isFunction(name: String, body: Any): Int = body match {
