@@ -107,6 +107,20 @@ object Builtins {
       case _ => throw new TypeError("can't get tail of non-list")
     }
 
+    case "last" => argCount(l, 1); Interpreter.eval(l(1), env) match {
+      case l: List[Any] => l.last
+      case s: String => s.last
+      case Literal(s) => s.last
+      case _ => throw new TypeError("can't get tail of non-list")
+    }
+
+    case "init" => argCount(l, 1); Interpreter.eval(l(1), env) match {
+      case l: List[Any] => l.init
+      case s: String => s.init
+      case Literal(s) => s.init
+      case _ => throw new TypeError("can't get tail of non-list")
+    }
+
     case "cons" => argCount(l, 2); Interpreter.eval(l(2), env) match {
       case list: List[Any] => Interpreter.eval(l(1), env) :: list
       case _ => throw new TypeError("can't cons to non-list")

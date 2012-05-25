@@ -6,7 +6,10 @@ import java.io.File
 import java.io.PrintWriter
 
 class Env(parent: Env) {
-  val map = collection.mutable.Map[String, Any]()
+  val map: collection.mutable.Map[String, Any] = parent match {
+    case null => collection.mutable.Map[String, Any]()
+    case p => collection.mutable.Map[String, Any](p.map.toSeq: _*)
+  }
 
 
   override def toString = map.mkString("\n")

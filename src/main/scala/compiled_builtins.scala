@@ -1,5 +1,7 @@
 package CompiledApp
 
+import scala.annotation.tailrec
+
 class TypeError(s: String) extends Exception(s) { }
 
 class MySeq[T](l: Seq[T]) {
@@ -107,11 +109,25 @@ object CompiledBuiltins {
     case list: List[Any] => list.tail
     case _ => throw new TypeError("Expected list")
   }
+  def last(l: Any) = l match {
+    case list: List[Any] => list.last
+    case _ => throw new TypeError("Expected list")
+  }
+  def init(l: Any) = l match {
+    case list: List[Any] => list.init
+    case _ => throw new TypeError("Expected list")
+  }
+  def cons(x: Any, xs: Any) = xs match {
+    case list: List[Any] => x :: list
+    case _ => throw new TypeError("Expected list")
+  }
   def list(args: Any*) = args
   def shuffle(l: Any) = l match {
     case list: List[Any] => util.Random.shuffle(list)
     case _ => throw new TypeError("Expected list")
   }
+
+  val unit = List()
 
   // user methods
     def filter(f: (Any) => Any, seq: Any): Any = {
@@ -146,12 +162,16 @@ object CompiledBuiltins {
     }
   }
 
-  def range(start: Any, stop: Any): Any = {
+  @tailrec def rec_range(start: Any, stop: Any, acc: Any): Any = {
     if(stop <= start) {
-      List()
+      reverse(acc)
     } else {
-      start :: range(start + 1l, stop)
+      rec_range(start + 1l, stop, start :: acc)
     }
+  }
+
+  def range(start: Any, stop: Any): Any = {
+    rec_range(start, stop, List())
   }
 
   def range(stop: Any): Any = {
@@ -178,19 +198,19 @@ object CompiledBuiltins {
     }
   }
 
-  def reverse(l: Any): Any = {
+  @tailrec def reverse(l: Any, acc: Any = List()): Any = {
     if(List() == l) {
-      l
+      acc
     } else {
-      reverse(cdr(l)) ++ list(car(l))
+      reverse(cdr(l), car(l) :: acc)
     }
   }
 
-  def length(list: Any): Any = {
+  @tailrec def length(list: Any, acc: Any = 0l): Any = {
     if(list == List()) {
-      0l
+      acc
     } else {
-      length(cdr(list)) + 1l
+      length(cdr(list), 1l + acc)
     }
   }
 

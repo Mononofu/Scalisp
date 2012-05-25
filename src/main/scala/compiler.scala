@@ -137,7 +137,6 @@ object %s extends App {
       // replace simple functions by operators for prettier code
       case op: String if "+-*/%".contains(op) => l.tail.map(e => process(e)).mkString("(", " %s ".format(op), ")")
       case "append" => l.tail.map(e => process(e)).mkString(" ++ ")
-      case "cons" => l.tail.map(e => process(e)).mkString(" :: ")
       case "=" if l.length == 3 => l.tail.map(e => process(e)).mkString(" == ")
       case comp: String if List("<", ">", "<=", ">=", "=", "!=").contains(comp) &&
         l.length == 3 => l.tail.map(e => process(e)).mkString(" %s ".format(comp))

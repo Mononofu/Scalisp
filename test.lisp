@@ -64,10 +64,36 @@
 (print (square+ (begin (print "executed") 5)))
 
 
-(defun unless-bad (cond exp)
+(defun unless_bad (cond exp)
   (if cond unit exp))
-(unless-bad (= 5 5) (print "executed branch"))
+(unless_bad (= 5 5) (print "executed branch"))
 
 (defmacro unless (COND EXP)
   (if ,COND unit ,EXP))
 (unless (= 5 5) (print "executed branch"))
+
+(defun map_good (f l acc)
+  (if (= l '())
+    acc
+    (map_good f (cdr l) (cons (f (car l)) acc))
+  )
+)
+
+;(map_good (lambda (x) (+ x 1)) (range 10000000) '())
+
+; naive sum, will cause stack overflow for n = 10.000
+(defun sum_to (n)
+  (if (= n 0)
+    0
+    (+ n (sum_to (- n 1)))))
+
+; tail-call version, won't overflow
+(defun sum_to_good (n acc)
+  (if (= n 0)
+    acc
+    (sum_to_good (- n 1) (+ n acc))))
+
+(print "tail-recursive sum: " (sum_to_good 10000 0))
+
+; another tail-cail test
+;(subseq (range 10200) 10000 10009)

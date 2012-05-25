@@ -1,14 +1,36 @@
-(defun length (list)
+(defun __length (list acc)
   (if (= list '())
-    0
-    (+ 1 (length (cdr list)))
+    acc
+    (__length (cdr list) (+ 1 acc))
+  )
+)
+
+(defun length (list)
+  (__length list 0)
+)
+
+
+
+(defun __reverse (l acc)
+  (if (= '() l)
+    acc
+    (__reverse (cdr l) (cons (car l) acc))
   )
 )
 
 (defun reverse (l)
-  (if (= '() l)
-    l
-    (append (reverse (cdr l)) (list (car l)))
+  (__reverse l '())
+)
+
+
+
+(defun __subseq (list start stop acc)
+  (if (> start 0)
+    (subseq (subseq list start) 0 (- stop start) acc)
+    (if (<= stop 0)
+      (reverse acc)
+      (__subseq (cdr list) 0 (- stop 1) (cons (car list) acc))
+    )
   )
 )
 
@@ -20,34 +42,32 @@
 )
 
 (defun subseq (list start stop)
-  (if (> start 0)
-    (subseq (subseq list start) 0 (- stop start))
-    (if (<= stop 0)
-      '()
-      (cons (car list) (subseq (cdr list) 0 (- stop 1)))
-    )
-  )
+  (__subseq list start stop '())
 )
 
 
+
+(defun __range (start stop acc)
+  (if (<= stop start)
+    (reverse acc)
+    (__range (+ start 1) stop (cons start acc))
+  )
+)
+
 (defun range (stop)
-  (range 0 stop)
+  (__range 0 stop '())
 )
 
 (defun range (start stop)
-  (if (<= stop start)
-    '()
-    (cons start (range (+ start 1) stop))
-  )
+  (__range start stop '())
 )
 
 
 (defun map (f seq)
-  (if (= '() seq)
-    '()
-    (cons (f (car seq)) (map f (cdr seq)))
-  )
+  (foldr (lambda (elem acc) (cons (f elem) acc) ) '() seq)
 )
+
+
 
 (defun foldl (f acc seq)
   (if (= '() seq)
@@ -56,16 +76,18 @@
   )
 )
 
+(defun foldr (f acc seq)
+  (if (= '() seq)
+    acc
+    (foldr f (f (last seq) acc) (init seq))
+  )
+)
+
 (defun reduce (f seq)
   (foldl f (car seq) (cdr seq))
 )
 
 (defun filter (f seq)
-  (if (= '() seq)
-    '()
-    (if (f (car seq))
-      (cons (car seq) (filter f (cdr seq)))
-      (filter f (cdr seq))
-    )
-  )
+  (foldr (lambda (elem acc) (if (f elem) (cons elem acc) acc)) '() seq)
 )
+
