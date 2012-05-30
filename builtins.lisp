@@ -26,7 +26,7 @@
 
 (defun __subseq (list start stop acc)
   (if (> start 0)
-    (subseq (subseq list start) 0 (- stop start) acc)
+    (__subseq (subseq list start) 0 (- stop start) acc)
     (if (<= stop 0)
       (reverse acc)
       (__subseq (cdr list) 0 (- stop 1) (cons (car list) acc))
@@ -68,6 +68,10 @@
 )
 
 
+(defun filter (f seq)
+  (foldr (lambda (elem acc) (if (f elem) (cons elem acc) acc)) '() seq)
+)
+
 
 (defun foldl (f acc seq)
   (if (= '() seq)
@@ -85,9 +89,5 @@
 
 (defun reduce (f seq)
   (foldl f (car seq) (cdr seq))
-)
-
-(defun filter (f seq)
-  (foldr (lambda (elem acc) (if (f elem) (cons elem acc) acc)) '() seq)
 )
 
