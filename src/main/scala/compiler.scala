@@ -14,7 +14,7 @@ object ScalispCompiler {
 
     val code = Preprocessor.process(ast).map(e => process(e)).filter(_.length > 0).mkString("\n\n  ")
 
-    """
+    ("""
 object %s extends App {
   import CompiledApp.CompiledBuiltins._
   import CompiledApp.Helper._
@@ -25,7 +25,7 @@ object %s extends App {
   // main code
   %s
 }
-  """.format(filename.split("\\.").head, global_functions.mkString("\n\n  "), code)
+  """.format(filename.split("\\.").head, global_functions.mkString("\n\n  "), code))
   }
 
   def compileLine(src: String) = {
