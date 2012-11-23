@@ -58,6 +58,7 @@ object Interpreter {
                   case n: String => n
                   case _ => "parm names have to be strings"
                 }
+                if(l.length != 4) throw new InterpreterException("function has to have form (defun <name> <parms> <bod>)")
                 val f = Function(p, l(3))
                 env.define(name, f)
               case _ => throw new InterpreterException("function arguments have to be a list")
